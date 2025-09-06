@@ -1,9 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+import os
 
-app = Flask(__name__)
-CORS(app)  # This lets your React app talk to Flask without errors
-
+app = Flask(__name__, static_folder='build', static_url_path='')
+CORS(app)  # Allow React app to communicate with Flask
 
 drug_knowledge_base = {
     "headache": {
@@ -146,11 +146,6 @@ drug_knowledge_base = {
     }
 }
 
-
-@app.route('/')
-def home():
-    return "Flask API is running! and working well"
-
 @app.route('/api/get_drug_info', methods=['POST'])
 def get_drug_info():
     data = request.json
@@ -166,6 +161,15 @@ def get_drug_info():
             "status": "error",
             "message": "Symptom not found in the knowledge base."
         }), 404
+
+# Serve React static files
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react_app(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
